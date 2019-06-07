@@ -15,11 +15,28 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="MainWindow.cpp">
+    <ClCompile Include="WindowsMessageMap.cpp">
+      <Filter>Ressourcendateien</Filter>
+    </ClCompile>
+    <ClCompile Include="Window.cpp">
+      <Filter>Ressourcendateien</Filter>
+    </ClCompile>
+    <ClCompile Include="WinMain.cpp">
       <Filter>Ressourcendateien</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="HeaderOfHeader.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="Window.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="WindowsMessageMap.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
