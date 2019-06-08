@@ -15,14 +15,17 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="WindowsMessageMap.cpp">
-      <Filter>Ressourcendateien</Filter>
+    <ClCompile Include="ErrorException.cpp">
+      <Filter>Quelldateien</Filter>
     </ClCompile>
     <ClCompile Include="Window.cpp">
-      <Filter>Ressourcendateien</Filter>
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="WindowsMessageMap.cpp">
+      <Filter>Quelldateien</Filter>
     </ClCompile>
     <ClCompile Include="WinMain.cpp">
-      <Filter>Ressourcendateien</Filter>
+      <Filter>Quelldateien</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -38,5 +41,21 @@
     <ClInclude Include="WindowsMessageMap.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
+    <ClInclude Include="ErrorException.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="3dx.rc">
+      <Filter>Ressourcendateien</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="connectedglobe.ico">
+      <Filter>Ressourcendateien</Filter>
+    </Image>
   </ItemGroup>
 </Project>
