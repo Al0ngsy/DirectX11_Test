@@ -23,6 +23,12 @@ int CALLBACK WinMain(		// CallBack use stdcall instead of cdecl of std C, window
 		{
 			TranslateMessage(&msg);	// responsible for throwing out WM_CHAR from Key Input, not for F1, F2 ... 
 			DispatchMessage(&msg);
+
+			/**Keyboard Message Test**/
+			if (wnd.kbrd.KeyIsPressed(VK_SPACE)) 
+			{
+				MessageBox(nullptr, "lpText: It works!", "lpCation: Space Pressed", 0);
+			}
 		}
 
 		if (gResult == -1)

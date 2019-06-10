@@ -120,6 +120,26 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noe
 	case WM_CLOSE:	// quitting the application but not destroy, that does the destructor
 		PostQuitMessage( 0 );
 		return 0;
+	// clear keystates on window focus loss to prevent input getting "stuck"
+	case WM_KILLFOCUS:
+		kbrd.ClearState();
+		break;
+	/*****START KEYBOARD MESSAGES*****/
+	case WM_KEYDOWN:
+	case WM_SYSKEYDOWN: // syskey to track ALT Key
+		if ( !(lParam & 0x40000000 /*bit 30 see WM_KEYDOWN*/) || kbrd.AutoRepIsEnabled()) // filter autorepeat
+		{
+			kbrd.OnKeyPressed(static_cast<unsigned char>(wParam));
+		}
+		break;
+	case WM_KEYUP:
+	case WM_SYSKEYUP:	// syskey to track ALT Key -> VK_MENU
+		kbrd.OnKeyReleased(static_cast<unsigned char>(wParam));
+		break;
+	case WM_CHAR:
+		kbrd.OnChar(static_cast<unsigned char>(wParam));
+		break;
+	/*****END KYBOARD MESSAGES*****/
 	}
 
 	return DefWindowProc(hWnd, msg, wParam, lParam);

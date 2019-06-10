@@ -1,6 +1,7 @@
 #pragma once
 #include "HeaderOfHeader.h"
 #include "ErrorException.h"
+#include "Keyboard.h"
 
 class Window
 {
@@ -40,7 +41,8 @@ public:
 	~Window();
 	Window(const Window&) = delete;
 	Window& operator = (const Window&) = delete;
-
+public:
+	Keyboard kbrd;
 private:
 	static LRESULT WINAPI HandleMsgSetup(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 	static LRESULT WINAPI HandleMsgThunk(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
