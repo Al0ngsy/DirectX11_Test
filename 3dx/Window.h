@@ -2,6 +2,7 @@
 #include "HeaderOfHeader.h"
 #include "ErrorException.h"
 #include "Keyboard.h"
+#include "Mouse.h"
 
 class Window
 {
@@ -39,10 +40,13 @@ private:
 public:
 	Window(int width, int height, const char* name);
 	~Window();
+	// for testing purpose
+	void SetTitle(const std::string&);
 	Window(const Window&) = delete;
 	Window& operator = (const Window&) = delete;
 public:
 	Keyboard kbrd;
+	Mouse mouse;
 private:
 	static LRESULT WINAPI HandleMsgSetup(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 	static LRESULT WINAPI HandleMsgThunk(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);

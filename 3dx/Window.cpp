@@ -47,6 +47,7 @@ HINSTANCE Window::WindowClass::GetInstance() noexcept
 
 // Window
 Window::Window(int width, int height, const char* name)
+	: width(width), height(height)
 {
 	// calc window size client area
 	RECT wr;
@@ -55,9 +56,7 @@ Window::Window(int width, int height, const char* name)
 	wr.top = 100;
 	wr.bottom = wr.top + height;
 	// Error Handling
-	if (FAILED(
-		AdjustWindowRect(&wr, WS_CAPTION | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SYSMENU, FALSE)
-	))
+	if (AdjustWindowRect(&wr, WS_CAPTION | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SYSMENU, FALSE) == 0)
 	{
 		throw ERR_LAST_EXCEPT();
 	}
@@ -84,6 +83,14 @@ Window::Window(int width, int height, const char* name)
 Window::~Window() 
 {
 	DestroyWindow(hWnd);
+}
+
+void Window::SetTitle(const std::string& title)
+{
+	if (SetWindowText(hWnd, title.c_str()) == 0)
+	{
+		throw ERR_LAST_EXCEPT();
+	}
 }
 
 LRESULT WINAPI Window::HandleMsgSetup(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -139,7 +146,83 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noe
 	case WM_CHAR:
 		kbrd.OnChar(static_cast<unsigned char>(wParam));
 		break;
-	/*****END KYBOARD MESSAGES*****/
+	/*****END KEYBOARD MESSAGES*****/
+	/*****START MOUSE MESSAGES*****/
+	case WM_MOUSEMOVE:
+		POINTS pt = MAKEPOINTS(lParam);
+		// inside client region
+		if (pt.x >= 0 && pt.x <= width && pt.y >= 0 && pt.y <= height)
+		{
+			mouse.OnMouseMove(pt.x, pt.y);
+			// capture mouse
+			if (!mouse.IsInWindow())
+			{
+				SetCapture(hWnd);
+				mouse.OnMouseEnter(); // set isInWindow to true
+			}
+		}
+		// outside client region
+		else 
+		{
+			// maintain capture if mouse was down
+			if (mouse.leftIsPressed || mouse.rightIsPressed || mouse.middleIsPressed) 
+			{
+				mouse.OnMouseMove(pt.x, pt.y);
+			}
+			// button up -> release capture
+			else
+			{
+				ReleaseCapture();
+				mouse.OnMouseLeave();
+			}
+		}
+		break;
+	case WM_LBUTTONDOWN:
+		pt = MAKEPOINTS(lParam);
+		mouse.OnLeftPressed(pt.x, pt.y);
+		break;
+	case WM_RBUTTONDOWN:
+		pt = MAKEPOINTS(lParam);
+		mouse.OnRightPressed(pt.x, pt.y);
+		break;
+	case WM_MBUTTONDOWN:
+		pt = MAKEPOINTS(lParam);
+		mouse.OnMiddlePressed(pt.x, pt.y);
+		break;
+	case WM_LBUTTONUP:
+		pt = MAKEPOINTS(lParam);
+		mouse.OnLeftReleased(pt.x, pt.y);
+		break;
+	case WM_RBUTTONUP:
+		pt = MAKEPOINTS(lParam);
+		mouse.OnRightReleased(pt.x, pt.y);
+		break;
+	case WM_MBUTTONUP:
+		pt = MAKEPOINTS(lParam);
+		mouse.OnMiddleReleased(pt.x, pt.y);
+		break;
+	case WM_MOUSEWHEEL:
+		pt = MAKEPOINTS(lParam);
+
+		/**dirty way to handle wheel up or down**/
+		/*
+		// wParam contains info about up (>0) or down (<0)
+		if (GET_WHEEL_DELTA_WPARAM(wParam) > 0)
+		{
+			mouse.OnWheelUp(pt.x, pt.x);
+		}
+		else if (GET_WHEEL_DELTA_WPARAM(wParam) < 0)
+		{
+			mouse.OnWheelDown(pt.x, pt.y);
+		}
+		*/
+
+		/**finer-resolution wheel handling**/
+		const int delta = GET_WHEEL_DELTA_WPARAM(wParam);
+		mouse.OnWheelDelta(pt.x, pt.y, delta);
+
+		break;
+	/*****END MOUSE MESSAGES*****/
 	}
 
 	return DefWindowProc(hWnd, msg, wParam, lParam);

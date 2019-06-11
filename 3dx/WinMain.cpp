@@ -1,4 +1,5 @@
 #include "Window.h"
+#include <sstream>
 
 int CALLBACK WinMain(		// CallBack use stdcall instead of cdecl of std C, window need it
 	HINSTANCE hIntance,		
@@ -23,6 +24,27 @@ int CALLBACK WinMain(		// CallBack use stdcall instead of cdecl of std C, window
 		{
 			TranslateMessage(&msg);	// responsible for throwing out WM_CHAR from Key Input, not for F1, F2 ... 
 			DispatchMessage(&msg);
+
+			/**Mouse Message Test**/
+			while (!wnd.mouse.IsEmpty())
+			{
+				const auto e = wnd.mouse.Read();
+				switch (e.GetType())
+				{
+				case Mouse::Event::Type::Leave:
+					wnd.SetTitle("Outside!");
+					break;
+				case Mouse::Event::Type::Move:
+				{
+					std::ostringstream oss;
+					oss << "Mouse at position: " << e.GetPosX() << ", " << e.GetPosY();
+					wnd.SetTitle(oss.str());
+				}
+					break;
+				default:
+					break;
+				}
+			}
 
 			/**Keyboard Message Test**/
 			if (wnd.kbrd.KeyIsPressed(VK_SPACE)) 
