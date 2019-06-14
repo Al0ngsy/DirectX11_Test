@@ -1,5 +1,4 @@
-#include "Window.h"
-#include <sstream>
+#include "App.h"
 
 int CALLBACK WinMain(		// CallBack use stdcall instead of cdecl of std C, window need it
 	HINSTANCE hIntance,		
@@ -9,55 +8,7 @@ int CALLBACK WinMain(		// CallBack use stdcall instead of cdecl of std C, window
 {
 	try
 	{
-		Window wnd(640, 480, "A Little Window");
-		//Window wnd2nd(300, 300, "Another Little Window");
-
-		// message
-		MSG msg;
-		BOOL gResult;
-		while (gResult = (GetMessage(
-			&msg,
-			nullptr,// get message from all window
-			0,		// get all
-			0		// get all
-		)) > 0)
-		{
-			TranslateMessage(&msg);	// responsible for throwing out WM_CHAR from Key Input, not for F1, F2 ... 
-			DispatchMessage(&msg);
-
-			/**Mouse Message Test**/
-			while (!wnd.mouse.IsEmpty())
-			{
-				const auto e = wnd.mouse.Read();
-				switch (e.GetType())
-				{
-				case Mouse::Event::Type::Leave:
-					wnd.SetTitle("Outside!");
-					break;
-				case Mouse::Event::Type::Move:
-				{
-					std::ostringstream oss;
-					oss << "Mouse at position: " << e.GetPosX() << ", " << e.GetPosY();
-					wnd.SetTitle(oss.str());
-				}
-					break;
-				default:
-					break;
-				}
-			}
-
-			/**Keyboard Message Test**/
-			if (wnd.kbrd.KeyIsPressed(VK_SPACE)) 
-			{
-				MessageBox(nullptr, "lpText: It works!", "lpCation: Space Pressed", 0);
-			}
-		}
-
-		if (gResult == -1)
-			return -1;
-
-		return msg.wParam;
-
+		App().AppLoop();
 	}
 	catch (const ErrorException& e)
 	{

@@ -3,6 +3,7 @@
 #include "ErrorException.h"
 #include "Keyboard.h"
 #include "Mouse.h"
+#include <optional>
 
 class Window
 {
@@ -40,10 +41,11 @@ private:
 public:
 	Window(int width, int height, const char* name);
 	~Window();
-	// for testing purpose
-	void SetTitle(const std::string&);
 	Window(const Window&) = delete;
 	Window& operator = (const Window&) = delete;
+	// for testing purpose
+	void SetTitle(const std::string& title);
+	static std::optional<int> ProcessMessage();
 public:
 	Keyboard kbrd;
 	Mouse mouse;

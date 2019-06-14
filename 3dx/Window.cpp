@@ -32,7 +32,7 @@ Window::WindowClass::WindowClass() noexcept
 
 Window::WindowClass::~WindowClass()
 {
-	UnregisterClass(GetName(), GetInstance());
+	UnregisterClass(wndClassName, GetInstance());
 }
 
 const char* Window::WindowClass::GetName() noexcept
@@ -77,7 +77,7 @@ Window::Window(int width, int height, const char* name)
 		throw ERR_LAST_EXCEPT();
 	}
 	// show Window
-	ShowWindow(hWnd, SW_SHOW);
+	ShowWindow(hWnd, SW_SHOWDEFAULT);
 }
 
 Window::~Window() 
@@ -91,6 +91,27 @@ void Window::SetTitle(const std::string& title)
 	{
 		throw ERR_LAST_EXCEPT();
 	}
+}
+
+std::optional<int> Window::ProcessMessage()
+{
+	MSG msg;
+
+	//while queue has messages, remove and dispatch them
+	while (PeekMessage(&msg,nullptr,0,0,PM_REMOVE))
+	{
+		// check for quit messages - peekmessage does not signal this via return
+		if (msg.message == WM_QUIT)
+		{
+			return msg.wParam;
+		}
+
+		TranslateMessage(&msg);	// responsible for throwing out WM_CHAR from Key Input, not for F1, F2 ... 
+		DispatchMessage(&msg);
+	}
+
+	// return empty optinal when not quitting app
+	return {}; 
 }
 
 LRESULT WINAPI Window::HandleMsgSetup(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)

@@ -103,9 +103,12 @@ private:
 	void OnWheelDelta(int x, int y, int delta) noexcept;
 private:
 	static constexpr unsigned int maxBufferSize = 16u;	// max size of the buffer
-	int x, y;
+	int x = 0;
+	int y = 0;
 	int wheelDeltaCarry = 0;
-	bool leftIsPressed, rightIsPressed, middleIsPressed = false;
+	bool leftIsPressed = false;
+	bool rightIsPressed = false;
+	bool middleIsPressed = false;
 	bool isInWindow = false;
 	std::queue<Event> buffer;
 };

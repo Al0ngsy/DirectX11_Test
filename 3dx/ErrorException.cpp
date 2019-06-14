@@ -32,7 +32,7 @@ const std::string& ErrorException::GetFile() const noexcept
 std::string ErrorException::GetOriginString() const noexcept
 {
 	std::ostringstream oss;
-	oss << "File: " << GetFile() << std::endl
-		<< "Line: " << GetFile() << std::endl;
+	oss << "File: " << file << std::endl
+		<< "Line: " << line << std::endl;
 	return oss.str();
 }
