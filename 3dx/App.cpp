@@ -22,8 +22,7 @@ int App::AppLoop()
 
 void App::CreateFrame()
 {
-	const float t = timer.Peek();
-	std::ostringstream oss;
-	oss << "Time since start: " << std::setprecision(1) << std::fixed << t << "s";
-	wnd.SetTitle(oss.str());
+	const float t = sin(timer.Peek()) / 2.0f + 0.5f;
+	wnd.Gfx().ClearBuffer(t,t,t);
+	wnd.Gfx().EndFrame();
 }

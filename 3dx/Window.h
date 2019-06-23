@@ -3,7 +3,9 @@
 #include "ErrorException.h"
 #include "Keyboard.h"
 #include "Mouse.h"
+#include "Graphic.h"
 #include <optional>
+#include <memory>
 
 class Window
 {
@@ -46,6 +48,7 @@ public:
 	// for testing purpose
 	void SetTitle(const std::string& title);
 	static std::optional<int> ProcessMessage();
+	Graphic& Gfx();
 public:
 	Keyboard kbrd;
 	Mouse mouse;
@@ -57,6 +60,8 @@ private:
 	int width = 0;
 	int height = 0;
 	HWND hWnd;
+	std::unique_ptr<Graphic> pGfx;
+	// optinal or unique_ptr see: https://stackoverflow.com/questions/44856701/what-to-use-stdoptional-or-stdunique-ptr?rq=1
 };
 
 // Macro For Error Exeption

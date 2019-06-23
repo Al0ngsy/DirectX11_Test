@@ -76,8 +76,10 @@ Window::Window(int width, int height, const char* name)
 	{
 		throw ERR_LAST_EXCEPT();
 	}
-	// show Window
+	// newly created windows start of as hidden
 	ShowWindow(hWnd, SW_SHOWDEFAULT);
+	// create graphic object
+	pGfx = std::make_unique<Graphic>(hWnd);
 }
 
 Window::~Window() 
@@ -112,6 +114,11 @@ std::optional<int> Window::ProcessMessage()
 
 	// return empty optinal when not quitting app
 	return {}; 
+}
+
+Graphic& Window::Gfx()
+{
+	return *pGfx;
 }
 
 LRESULT WINAPI Window::HandleMsgSetup(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
