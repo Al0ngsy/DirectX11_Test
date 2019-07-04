@@ -4,6 +4,7 @@
 #include "ErrorException.h"
 #include <vector>
 #include "DxgiInfoManager.h"
+#include <wrl.h>
 
 class Graphic
 {
@@ -42,7 +43,7 @@ public:
 	// rule of three - google it
 	Graphic(const Graphic&) = delete;
 	Graphic& operator = (const Graphic&) = delete;
-	~Graphic();
+	~Graphic() = default;
 	// swap back and front
 	void EndFrame();
 	void ClearBuffer(float r, float g, float b) noexcept;
@@ -51,8 +52,9 @@ private:
 	DxgiInfoManager infoManager;
 #endif
 	// for CreateDeviceAndSwapChain
-	ID3D11Device* pDevice = nullptr;
-	IDXGISwapChain* pSwapChain = nullptr;
-	ID3D11DeviceContext* pDeviceContext = nullptr;
-	ID3D11RenderTargetView* pTarget = nullptr;
+	// declaring Smart/Com Pointer, they auto release
+	Microsoft::WRL::ComPtr<ID3D11Device> pDevice;
+	Microsoft::WRL::ComPtr<IDXGISwapChain> pSwapChain;
+	Microsoft::WRL::ComPtr<ID3D11DeviceContext> pDeviceContext;
+	Microsoft::WRL::ComPtr<ID3D11RenderTargetView> pTarget;
 };

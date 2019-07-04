@@ -1,8 +1,11 @@
 #include "Graphic.h"
 #include "dxerr.h"
+#include <wrl.h>
 #include <sstream>
 
 #pragma comment(lib, "d3d11.lib")
+
+namespace wrl = Microsoft::WRL;
 
 // makro for error checking & throwing exception
 #define GFX_EXCEPT_NOINFO(hr) Graphic::HrException( __LINE__,__FILE__,(hr) )
@@ -63,45 +66,21 @@ Graphic::Graphic(HWND hWnd)
 			0,
 			D3D11_SDK_VERSION,
 			&scd,
-			&pSwapChain,	// pointer to pointer swap chain
-			&pDevice,		// pointer to device pointer
+			&pSwapChain,	// basicaly like pSwapChain.ReleaseAndGetAddressOf(), overloaded of &
+			&pDevice,		// if not want to release use GetAddressOf()
 			nullptr,
-			&pDeviceContext // pointer to device context pointer
+			&pDeviceContext
 		)
 	);
 	// gain acces to texture subresource in swap chain aka back buffer
-	ID3D11Resource* pBackBuffer = nullptr;
+	wrl::ComPtr<ID3D11Resource> pBackBuffer; // smart pointer Object to handle the release for us
+
 	GFX_THROW_INFO(
-		pSwapChain->GetBuffer(0, __uuidof(ID3D11Resource), reinterpret_cast<void**>(&pBackBuffer))
+		pSwapChain->GetBuffer(0, __uuidof(ID3D11Resource), &pBackBuffer)
 	);
 	GFX_THROW_INFO(
-		pDevice->CreateRenderTargetView(pBackBuffer, nullptr, &pTarget)
+		pDevice->CreateRenderTargetView(pBackBuffer.Get(), nullptr, &pTarget) // Get() return the underlying pointer
 	);
-	pBackBuffer->Release();
-}
-
-Graphic::~Graphic()
-{
-	// reference counting, therefore release if exist
-	if (pDevice != nullptr)
-	{
-		pDevice->Release();
-	}
-
-	if (pSwapChain != nullptr)
-	{
-		pSwapChain->Release();
-	}
-
-	if (pDeviceContext != nullptr)
-	{
-		pDeviceContext->Release();
-	}
-
-	if (pTarget != nullptr)
-	{
-		pTarget->Release();
-	}
 }
 
 void Graphic::EndFrame()
@@ -127,7 +106,7 @@ void Graphic::EndFrame()
 void Graphic::ClearBuffer(float r, float g, float b) noexcept
 {
 	const float color[] = { r, g, b, 1.0f };
-	pDeviceContext->ClearRenderTargetView(pTarget, color);
+	pDeviceContext->ClearRenderTargetView(pTarget.Get(), color);
 }
 
 Graphic::HrException::HrException(int line, const char* file, HRESULT hr, std::vector<std::string> infoMsgs) noexcept
