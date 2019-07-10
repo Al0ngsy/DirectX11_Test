@@ -24,5 +24,6 @@ void App::CreateFrame()
 {
 	const float t = sin(timer.Peek()) / 2.0f + 0.5f;
 	wnd.Gfx().ClearBuffer(t,t,t);
+	wnd.Gfx().TestDraw();
 	wnd.Gfx().EndFrame();
 }

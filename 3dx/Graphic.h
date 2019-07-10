@@ -37,7 +37,16 @@ public:
 	private:
 		std::string reason;
 	};
-
+	class InfoException : public Exception
+	{
+	public :
+		InfoException(int line, const char* file, std::vector<std::string> infoMsgs) noexcept;
+		const char* what() const noexcept override;
+		const char* GetType() const noexcept override;
+		std::string GetErrorInfo() const noexcept;
+	private:
+		std::string info;
+	};
 public:
 	Graphic(HWND hWnd);
 	// rule of three - google it
@@ -47,6 +56,9 @@ public:
 	// swap back and front
 	void EndFrame();
 	void ClearBuffer(float r, float g, float b) noexcept;
+
+	void TestDraw();
+
 private:
 #ifndef NDEBUG
 	DxgiInfoManager infoManager;
