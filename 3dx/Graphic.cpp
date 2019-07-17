@@ -125,9 +125,9 @@ void Graphic::TestDraw()
 	// create vertex buffer (a test triangle)
 	const Vertex triangle[] =
 	{
-		{0.0f, 1.0f},
-		{-0.5f, 0.0f},
-		{0.5f, 0.0f}
+		{-0.5f, -0.50f},
+		{0.0f, 0.50f},
+		{0.50f, -0.50f}
 	};
 	D3D11_BUFFER_DESC bDesc = {};
 	bDesc.ByteWidth = sizeof(triangle);
@@ -146,11 +146,23 @@ void Graphic::TestDraw()
 	// bind vertex buffer to pipeline
 	const UINT stride = sizeof(Vertex);
 	const UINT offset = 0u;
-	pDeviceContext->IASetVertexBuffers(0u, 1u, &pVertexBuffer, &stride, &offset);
+	pDeviceContext->IASetVertexBuffers(0u, 1u, pVertexBuffer.GetAddressOf(), &stride, &offset);
+
+	// create pixel shader
+	wrl::ComPtr<ID3D11PixelShader> pPixelShader;
+	wrl::ComPtr<ID3DBlob> pBlob;
+	GFX_THROW_INFO(
+		D3DReadFileToBlob(L"PixelShader.cso", &pBlob)	// reuse the blob pointer, with & command SmartPointer also do auto release for us before overwrite
+	);
+	GFX_THROW_INFO(
+		pDevice->CreatePixelShader(pBlob->GetBufferPointer(), pBlob->GetBufferSize(), nullptr, &pPixelShader)
+	);
+
+	// bind pixel shader
+	pDeviceContext->PSSetShader(pPixelShader.Get(), nullptr, 0);
 
 	// create vertex shader
 	wrl::ComPtr<ID3D11VertexShader> pVertexShader;
-	wrl::ComPtr<ID3DBlob> pBlob;
 	GFX_THROW_INFO(
 		D3DReadFileToBlob(L"VertexShader.cso", &pBlob)
 	);
@@ -160,6 +172,41 @@ void Graphic::TestDraw()
 
 	// bind vertex shader
 	pDeviceContext->VSSetShader(pVertexShader.Get(), nullptr, 0);
+
+	// input layout (vertex) (2d position only)
+	wrl::ComPtr<ID3D11InputLayout> pInputLayout;
+	const D3D11_INPUT_ELEMENT_DESC ied[] =
+	{
+		{"Position", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0}
+	};
+	GFX_THROW_INFO(
+		pDevice->CreateInputLayout(
+			ied,
+			(UINT)std::size(ied),
+			pBlob->GetBufferPointer(),
+			pBlob->GetBufferSize(),
+			&pInputLayout
+		)
+	);
+
+	//bind vertex layout
+	pDeviceContext->IASetInputLayout(pInputLayout.Get());
+
+	// bind render target
+	pDeviceContext->OMSetRenderTargets(1u, pTarget.GetAddressOf() , nullptr);	// use pTarget.GetAddressOf() instead of &pTarget since we dont want it to auto release
+
+	// set primitive topology to triangle list - full list of all type here: https://docs.microsoft.com/en-us/windows/win32/direct3d11/d3d10-graphics-programming-guide-primitive-topologies
+	pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	// config view port
+	D3D11_VIEWPORT viewP;
+	viewP.Width = 800;
+	viewP.Height = 600;
+	viewP.MinDepth = 0;
+	viewP.MaxDepth = 1;
+	viewP.TopLeftX = 0;
+	viewP.TopLeftY = 0;
+	pDeviceContext->RSSetViewports(1u, &viewP);
 
 	GFX_THROW_INFO_ONLY(
 		pDeviceContext->Draw( (UINT)std::size(triangle), 0u)
