@@ -115,20 +115,50 @@ void Graphic::ClearBuffer(float r, float g, float b) noexcept
 
 void Graphic::TestDraw()
 {
-	HRESULT hr;
+	HRESULT hr;	// for error throw back
 
 	struct Vertex
 	{
-		float x;
-		float y;
+		struct
+		{
+			float x;
+			float y;
+		} pos;
+		struct
+		{
+			float r, g, b;
+		} color;
 	};
-	// create vertex buffer (a test triangle)
-	const Vertex triangle[] =
+	// create vertex buffer (a test color hexagon)
+	// clock wise {x,y,r,g,b}
+	Vertex triangle[] =
 	{
-		{-0.5f, -0.50f},
-		{0.0f, 0.50f},
-		{0.50f, -0.50f}
+		{0.0f, 0.5f, 0.0f, 0.0f, 0.0f},
+		{0.35f, 0.3f, 0.0f, 0.0f, 0.0f},
+		{0.35f, -0.3f, 0.0f, 0.0f, 0.0f},
+		{0.0f, -0.5f, 0.0f, 0.0f, 0.0f},
+		{-0.35f, -0.3f, 0.0f, 0.0f, 0.0f},
+		{-0.35f, 0.3f, 0.0f, 0.0f, 0.0f},
 	};
+
+	triangle[0].color.g = 1.0f;
+	triangle[0].color.b = 1.0f;
+
+	triangle[1].color.g = 1.0f;
+	
+	triangle[2].color.r = 1.0f;
+	triangle[2].color.g = 1.0f;
+	
+	triangle[3].color.r = 1.0f;
+	
+	triangle[4].color.r = 1.0f;
+	triangle[4].color.b = 1.0f;
+	
+	triangle[5].color.b = 1.0f;
+
+	// pDeviceContext -> if we do something with the pipeline
+
+	wrl::ComPtr<ID3D11Buffer> pVertexBuffer;
 	D3D11_BUFFER_DESC bDesc = {};
 	bDesc.ByteWidth = sizeof(triangle);
 	bDesc.Usage = D3D11_USAGE_DEFAULT;
@@ -138,7 +168,6 @@ void Graphic::TestDraw()
 	bDesc.StructureByteStride = sizeof(Vertex);
 	D3D11_SUBRESOURCE_DATA sResData = {};
 	sResData.pSysMem = triangle;
-	wrl::ComPtr<ID3D11Buffer> pVertexBuffer;
 	GFX_THROW_INFO(
 		pDevice->CreateBuffer(&bDesc, &sResData, &pVertexBuffer)
 	);
@@ -148,6 +177,33 @@ void Graphic::TestDraw()
 	const UINT offset = 0u;
 	pDeviceContext->IASetVertexBuffers(0u, 1u, pVertexBuffer.GetAddressOf(), &stride, &offset);
 
+	// create index buffer
+	const unsigned short indices[] =
+	{
+		0,1,2,
+		2,3,4,
+		4,5,0,
+		0,2,4
+	};
+	wrl::ComPtr<ID3D11Buffer> pIndexBuffer;
+	D3D11_BUFFER_DESC ibDesc = {};
+	ibDesc.ByteWidth = sizeof(indices);
+	ibDesc.Usage = D3D11_USAGE_DEFAULT;
+	ibDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+	ibDesc.CPUAccessFlags = 0;
+	ibDesc.MiscFlags = 0;
+	ibDesc.StructureByteStride = sizeof(unsigned short);
+	D3D11_SUBRESOURCE_DATA isResData = {};
+	isResData.pSysMem = indices;
+	GFX_THROW_INFO(
+		pDevice->CreateBuffer(&ibDesc, &isResData, &pIndexBuffer)
+	);
+
+	// bind index buffer to pipeline
+	const UINT istride = sizeof(unsigned short);
+	const UINT ioffset = 0u;
+	pDeviceContext->IASetIndexBuffer(pIndexBuffer.Get(), DXGI_FORMAT_R16_UINT, ioffset);
+	
 	// create pixel shader
 	wrl::ComPtr<ID3D11PixelShader> pPixelShader;
 	wrl::ComPtr<ID3DBlob> pBlob;
@@ -177,7 +233,9 @@ void Graphic::TestDraw()
 	wrl::ComPtr<ID3D11InputLayout> pInputLayout;
 	const D3D11_INPUT_ELEMENT_DESC ied[] =
 	{
-		{"Position", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0}
+		{"Position", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+		{"Color", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
+
 	};
 	GFX_THROW_INFO(
 		pDevice->CreateInputLayout(
@@ -209,7 +267,10 @@ void Graphic::TestDraw()
 	pDeviceContext->RSSetViewports(1u, &viewP);
 
 	GFX_THROW_INFO_ONLY(
-		pDeviceContext->Draw( (UINT)std::size(triangle), 0u)
+		// this draw what is inside triangle[]
+		//pDeviceContext->Draw( (UINT)std::size(triangle), 0u)
+		// this draw based on index
+		pDeviceContext->DrawIndexed( (UINT) std::size(indices), 0u, 0u)
 	);
 }
 
