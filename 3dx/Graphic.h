@@ -57,7 +57,7 @@ public:
 	void EndFrame();
 	void ClearBuffer(float r, float g, float b) noexcept;
 
-	void TestDraw();
+	void TestDraw(float);
 
 private:
 #ifndef NDEBUG

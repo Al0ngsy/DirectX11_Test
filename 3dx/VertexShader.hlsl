@@ -4,10 +4,20 @@ struct VSOutPut // to return pos & col, sequence is important for PS
     float3 col : COLOR;
 };
 
+cbuffer cb
+{
+    // matrix coming from constant buffer
+    // cpu gives row major 
+    // gpu expect col major, makes it row major make easier but slightly slower
+    row_major matrix transf;  
+};
+
 VSOutPut main(float2 pos : POSITION, float3 col : COLOR)
 {
     VSOutPut vsout;
-    vsout.pos = float4(pos.x, pos.y, 0.0f, 1.0f);
+    // multiply given point with the tranformation matrix
+    // mul(vector, matrix) built in function
+    vsout.pos = mul(float4(pos.x, pos.y, 0.0f, 1.0f), transf);  
     vsout.col = col;
     return vsout;
 }

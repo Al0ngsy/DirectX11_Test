@@ -113,7 +113,7 @@ void Graphic::ClearBuffer(float r, float g, float b) noexcept
 	pDeviceContext->ClearRenderTargetView(pTarget.Get(), color);
 }
 
-void Graphic::TestDraw()
+void Graphic::TestDraw(float angle)
 {
 	HRESULT hr;	// for error throw back
 
@@ -141,6 +141,7 @@ void Graphic::TestDraw()
 		{-0.35f, 0.3f, 0.0f, 0.0f, 0.0f},
 	};
 
+	// give it color
 	triangle[0].color.g = 1.0f;
 	triangle[0].color.b = 1.0f;
 
@@ -204,6 +205,42 @@ void Graphic::TestDraw()
 	const UINT ioffset = 0u;
 	pDeviceContext->IASetIndexBuffer(pIndexBuffer.Get(), DXGI_FORMAT_R16_UINT, ioffset);
 	
+	// create constant buffer for transformation matrix
+	struct ConstantBuffer
+	{
+		struct
+		{
+			float e[4][4];
+		} transformation;
+	};
+
+	const ConstantBuffer cb =
+	{
+		{
+			(3.0f / 4.0f)*std::cos(angle),	std::sin(angle),	0.0f,	0.0f,
+			(3.0f / 4.0f)*-std::sin(angle),	std::cos(angle),	0.0f,	0.0f,
+			0.0f,	0.0f,	1.0f,	0.0f,
+			0.0f,	0.0f,	0.0f,	1.0f,
+		}
+	};
+	wrl::ComPtr<ID3D11Buffer> pConstantBuffer;
+	D3D11_BUFFER_DESC cbDesc = {};
+	cbDesc.ByteWidth = sizeof(cb);
+	cbDesc.Usage = D3D11_USAGE_DYNAMIC;
+	cbDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	cbDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	cbDesc.MiscFlags = 0;
+	cbDesc.StructureByteStride = 0;
+	D3D11_SUBRESOURCE_DATA cbResData = {};
+	cbResData.pSysMem = &cb;
+	GFX_THROW_INFO(
+		pDevice->CreateBuffer(&cbDesc, &cbResData, &pConstantBuffer)
+	);
+
+	// bind constant buffer to vertex shader
+	pDeviceContext->VSSetConstantBuffers(0u, 1u, pConstantBuffer.GetAddressOf());
+
+
 	// create pixel shader
 	wrl::ComPtr<ID3D11PixelShader> pPixelShader;
 	wrl::ComPtr<ID3DBlob> pBlob;
