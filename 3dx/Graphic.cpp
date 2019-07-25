@@ -3,11 +3,13 @@
 #include <wrl.h>
 #include <sstream>
 #include <d3dcompiler.h>
+#include <DirectXMath.h>
 
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "D3DCompiler.lib")
 
 namespace wrl = Microsoft::WRL;
+namespace dx = DirectX;
 
 // makro for error checking & throwing exception
 #define GFX_EXCEPT_NOINFO(hr) Graphic::HrException( __LINE__,__FILE__,(hr) )
@@ -113,7 +115,7 @@ void Graphic::ClearBuffer(float r, float g, float b) noexcept
 	pDeviceContext->ClearRenderTargetView(pTarget.Get(), color);
 }
 
-void Graphic::TestDraw(float angle)
+void Graphic::TestDraw(float angle, float x, float y)
 {
 	HRESULT hr;	// for error throw back
 
@@ -208,19 +210,19 @@ void Graphic::TestDraw(float angle)
 	// create constant buffer for transformation matrix
 	struct ConstantBuffer
 	{
-		struct
-		{
-			float e[4][4];
-		} transformation;
+		// 4 by 4 row major matrix 
+		dx::XMMATRIX transform;
 	};
 
 	const ConstantBuffer cb =
 	{
 		{
-			(3.0f / 4.0f)*std::cos(angle),	std::sin(angle),	0.0f,	0.0f,
-			(3.0f / 4.0f)*-std::sin(angle),	std::cos(angle),	0.0f,	0.0f,
-			0.0f,	0.0f,	1.0f,	0.0f,
-			0.0f,	0.0f,	0.0f,	1.0f,
+			// transposing make it a col major matrix like what gpu is expecting
+			dx::XMMatrixTranspose(
+				dx::XMMatrixRotationZ(angle) *
+				dx::XMMatrixScaling(3.0f / 4.0f, 1.0f, 1.0f) *
+				dx::XMMatrixTranslation(x, y, 1.0f)
+			)
 		}
 	};
 	wrl::ComPtr<ID3D11Buffer> pConstantBuffer;

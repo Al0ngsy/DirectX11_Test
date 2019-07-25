@@ -7,9 +7,8 @@ struct VSOutPut // to return pos & col, sequence is important for PS
 cbuffer cb
 {
     // matrix coming from constant buffer
-    // cpu gives row major 
-    // gpu expect col major, makes it row major make easier but slightly slower
-    row_major matrix transf;  
+    // gpu expect col major
+    matrix transf;  
 };
 
 VSOutPut main(float2 pos : POSITION, float3 col : COLOR)
