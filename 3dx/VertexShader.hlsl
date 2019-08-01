@@ -1,9 +1,3 @@
-struct VSOutPut // to return pos & col, sequence is important for PS
-{
-    float4 pos : SV_POSITION;
-    float3 col : COLOR;
-};
-
 cbuffer cb
 {
     // matrix coming from constant buffer
@@ -11,12 +5,7 @@ cbuffer cb
     matrix transf;  
 };
 
-VSOutPut main(float2 pos : POSITION, float3 col : COLOR)
+float4 main(float3 pos : POSITION) : SV_Position
 {
-    VSOutPut vsout;
-    // multiply given point with the tranformation matrix
-    // mul(vector, matrix) built in function
-    vsout.pos = mul(float4(pos.x, pos.y, 0.0f, 1.0f), transf);  
-    vsout.col = col;
-    return vsout;
+     return mul(float4(pos, 1.0f), transf);
 }
