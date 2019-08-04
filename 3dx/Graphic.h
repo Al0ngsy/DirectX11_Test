@@ -5,9 +5,11 @@
 #include <vector>
 #include "DxgiInfoManager.h"
 #include <wrl.h>
+#include <DirectXMath.h>
 
 class Graphic
 {
+	friend class Bindable;
 public:
 	// base graphic Exception
 	class Exception : public ErrorException
@@ -56,10 +58,11 @@ public:
 	// swap back and front
 	void EndFrame();
 	void ClearBuffer(float r, float g, float b) noexcept;
-
-	void TestDraw(float, float, float);
-
+	void DrawIndexed(UINT count) noexcept;
+	void SetProjection(DirectX::FXMMATRIX proj) noexcept;
+	DirectX::XMMATRIX GetProjection() const noexcept;
 private:
+	DirectX::XMMATRIX projection;
 #ifndef NDEBUG
 	DxgiInfoManager infoManager;
 #endif

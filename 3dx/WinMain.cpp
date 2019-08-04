@@ -8,7 +8,7 @@ int CALLBACK WinMain(		// CallBack use stdcall instead of cdecl of std C, window
 {
 	try
 	{
-		App().AppLoop();
+		return App{}.Go();
 	}
 	catch (const ErrorException& e)
 	{

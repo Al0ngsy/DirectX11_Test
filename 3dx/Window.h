@@ -73,8 +73,3 @@ private:
 	std::unique_ptr<Graphic> pGfx;
 	// optinal or unique_ptr see: https://stackoverflow.com/questions/44856701/what-to-use-stdoptional-or-stdunique-ptr?rq=1
 };
-
-// Macro For Error Exeption
-#define ERR_EXCEPT(hr) Window::HrException(__LINE__, __FILE__, hr);
-#define ERR_LAST_EXCEPT() Window::HrException(__LINE__, __FILE__, GetLastError());
-#define ERR_NOGFX_EXCEPT() Window::NoGfxException(__LINE__, __FILE__);

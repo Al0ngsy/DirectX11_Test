@@ -6,10 +6,12 @@ class App
 {
 public:
 	App();
-	int AppLoop();
+	int Go();
+	~App();
 private:
 	void CreateFrame();
 private:
 	Window wnd;
 	TimeCounter timer;
+	std::vector<std::unique_ptr<class Box>> boxes;
 };

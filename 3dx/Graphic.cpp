@@ -4,6 +4,7 @@
 #include <sstream>
 #include <d3dcompiler.h>
 #include <DirectXMath.h>
+#include "GraphicThrowMacros.h"
 
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "D3DCompiler.lib")
@@ -11,21 +12,7 @@
 namespace wrl = Microsoft::WRL;
 namespace dx = DirectX;
 
-// makro for error checking & throwing exception
-#define GFX_EXCEPT_NOINFO(hr) Graphic::HrException( __LINE__,__FILE__,(hr) )
-#define GFX_THROW_NOINFO(hrcall) if( FAILED( hr = (hrcall) ) ) throw Graphic::HrException( __LINE__,__FILE__,hr )
 
-#ifndef NDEBUG
-#define GFX_EXCEPT(hr) Graphic::HrException( __LINE__,__FILE__,(hr),infoManager.GetMessages() )
-#define GFX_THROW_INFO(hrcall) infoManager.Set(); if( FAILED( hr = (hrcall) ) ) throw GFX_EXCEPT(hr)
-#define GFX_DEVICE_REMOVED_EXCEPT(hr) Graphic::DeviceRemovedException( __LINE__,__FILE__,(hr),infoManager.GetMessages() )
-#define GFX_THROW_INFO_ONLY(call) infoManager.Set(); (call); {auto v = infoManager.GetMessages(); if(!v.empty()) {throw Graphic::InfoException( __LINE__,__FILE__,v);}}
-#else
-#define GFX_EXCEPT(hr) Graphic::HrException( __LINE__,__FILE__,(hr) )
-#define GFX_THROW_INFO(hrcall) GFX_THROW_NOINFO(hrcall)
-#define GFX_DEVICE_REMOVED_EXCEPT(hr) Graphic::DeviceRemovedException( __LINE__,__FILE__,(hr) )
-#define GFX_THROW_INFO_ONLY(call) (call)
-#endif
 
 Graphic::Graphic(HWND hWnd)
 {
@@ -128,6 +115,16 @@ Graphic::Graphic(HWND hWnd)
 
 	// bind depth stencil texture view to output merger
 	pDeviceContext->OMSetRenderTargets(1u, pTarget.GetAddressOf(), pDepthView.Get());
+
+	// configure viewport
+	D3D11_VIEWPORT vp;
+	vp.Width = 800.0f;
+	vp.Height = 600.0f;
+	vp.MinDepth = 0.0f;
+	vp.MaxDepth = 1.0f;
+	vp.TopLeftX = 0.0f;
+	vp.TopLeftY = 0.0f;
+	pDeviceContext->RSSetViewports(1u, &vp);
 }
 
 void Graphic::EndFrame()
@@ -157,225 +154,21 @@ void Graphic::ClearBuffer(float r, float g, float b) noexcept
 	pDeviceContext->ClearDepthStencilView(pDepthView.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0u);
 }
 
-void Graphic::TestDraw(float angle, float x, float y)
+void Graphic::DrawIndexed(UINT count) noexcept
 {
-	HRESULT hr;	// for error throw back
-
-	struct Vertex
-	{
-		struct
-		{
-			float x;
-			float y;
-			float z;
-		} pos;
-	};
-	// create vertex buffer (cube)
-	// clock wise {x,y,z}
-	Vertex triangle[] =
-	{
-		{ -1.0f,-1.0f,-1.0f},
-		{ 1.0f,-1.0f,-1.0f},
-		{ -1.0f,1.0f,-1.0f},
-		{ 1.0f,1.0f,-1.0f },
-		{ -1.0f,-1.0f,1.0f},
-		{ 1.0f,-1.0f,1.0f },
-		{ -1.0f,1.0f,1.0f},
-		{ 1.0f,1.0f,1.0f},
-	};
-
-	//
-	// pDeviceContext -> if we do something with the pipeline
-	//
-
-	wrl::ComPtr<ID3D11Buffer> pVertexBuffer;
-	D3D11_BUFFER_DESC bDesc = {};
-	bDesc.ByteWidth = sizeof(triangle);
-	bDesc.Usage = D3D11_USAGE_DEFAULT;
-	bDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	bDesc.CPUAccessFlags = 0;
-	bDesc.MiscFlags = 0;
-	bDesc.StructureByteStride = sizeof(Vertex);
-	D3D11_SUBRESOURCE_DATA sResData = {};
-	sResData.pSysMem = triangle;
-	GFX_THROW_INFO(
-		pDevice->CreateBuffer(&bDesc, &sResData, &pVertexBuffer)
-	);
-	
-	// bind vertex buffer to pipeline
-	const UINT stride = sizeof(Vertex);
-	const UINT offset = 0u;
-	pDeviceContext->IASetVertexBuffers(0u, 1u, pVertexBuffer.GetAddressOf(), &stride, &offset);
-
-	// create index buffer
-	const unsigned short indices[] =
-	{
-		0,2,1, 2,3,1,
-		1,3,5, 3,7,5,
-		2,6,3, 3,6,7,
-		4,5,7, 4,7,6,
-		0,4,2, 2,4,6,
-		0,1,4, 1,5,4
-	};
-	wrl::ComPtr<ID3D11Buffer> pIndexBuffer;
-	D3D11_BUFFER_DESC ibDesc = {};
-	ibDesc.ByteWidth = sizeof(indices);
-	ibDesc.Usage = D3D11_USAGE_DEFAULT;
-	ibDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
-	ibDesc.CPUAccessFlags = 0;
-	ibDesc.MiscFlags = 0;
-	ibDesc.StructureByteStride = sizeof(unsigned short);
-	D3D11_SUBRESOURCE_DATA isResData = {};
-	isResData.pSysMem = indices;
-	GFX_THROW_INFO(
-		pDevice->CreateBuffer(&ibDesc, &isResData, &pIndexBuffer)
-	);
-
-	// bind index buffer to pipeline
-	const UINT istride = sizeof(unsigned short);
-	const UINT ioffset = 0u;
-	pDeviceContext->IASetIndexBuffer(pIndexBuffer.Get(), DXGI_FORMAT_R16_UINT, ioffset);
-	
-	// create constant buffer for transformation matrix
-	struct ConstantBuffer
-	{
-		// 4 by 4 row major matrix 
-		dx::XMMATRIX transform;
-	};
-
-	const ConstantBuffer cb =
-	{
-		{
-			// transposing make it a col major matrix like what gpu is expecting
-			dx::XMMatrixTranspose(
-				dx::XMMatrixRotationZ(angle) *
-				dx::XMMatrixRotationX(angle) *
-				dx::XMMatrixTranslation(x, y, 4.0f) *
-				dx::XMMatrixPerspectiveLH(1.0f, 3.0f/4.0f, 0.5f, 10.0f)
-			)
-		}
-	};
-	wrl::ComPtr<ID3D11Buffer> pConstantBuffer;
-	D3D11_BUFFER_DESC cbDesc = {};
-	cbDesc.ByteWidth = sizeof(cb);
-	cbDesc.Usage = D3D11_USAGE_DYNAMIC;
-	cbDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	cbDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	cbDesc.MiscFlags = 0;
-	cbDesc.StructureByteStride = 0;
-	D3D11_SUBRESOURCE_DATA cbResData = {};
-	cbResData.pSysMem = &cb;
-	GFX_THROW_INFO(
-		pDevice->CreateBuffer(&cbDesc, &cbResData, &pConstantBuffer)
-	);
-
-	// bind constant buffer to vertex shader
-	pDeviceContext->VSSetConstantBuffers(0u, 1u, pConstantBuffer.GetAddressOf());
-
-	// create constant buffer for face color
-	struct ConstantBuffer2
-	{
-		struct
-		{
-			float r;
-			float g;
-			float b;
-			float a;
-		} face_colors[6];
-	};
-
-	const ConstantBuffer2 cb2 =
-	{
-		{
-			{1.0f,0.0f,1.0f},
-			{1.0f,0.0f,0.0f},
-			{0.0f,1.0f,0.0f},
-			{0.0f,0.0f,1.0f},
-			{1.0f,1.0f,0.0f},
-			{0.0f,1.0f,1.0f}
-		}
-	};
-
-	wrl::ComPtr<ID3D11Buffer> pConstantBuffer2;
-	D3D11_BUFFER_DESC cbDesc2 = {};
-	cbDesc2.ByteWidth = sizeof(cb2);
-	cbDesc2.Usage = D3D11_USAGE_DEFAULT;
-	cbDesc2.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	cbDesc2.CPUAccessFlags = 0u;
-	cbDesc2.MiscFlags = 0;
-	cbDesc2.StructureByteStride = 0;
-	D3D11_SUBRESOURCE_DATA cbResData2 = {};
-	cbResData2.pSysMem = &cb2;
-	GFX_THROW_INFO(
-		pDevice->CreateBuffer(&cbDesc2, &cbResData2, &pConstantBuffer2)
-	);
-
-	// bind constant buffer to pixel shader
-	pDeviceContext->PSSetConstantBuffers(0u, 1u, pConstantBuffer2.GetAddressOf());
-
-	// create pixel shader
-	wrl::ComPtr<ID3D11PixelShader> pPixelShader;
-	wrl::ComPtr<ID3DBlob> pBlob;
-	GFX_THROW_INFO(
-		D3DReadFileToBlob(L"PixelShader.cso", &pBlob)	// reuse the blob pointer, with & command SmartPointer also do auto release for us before overwrite
-	);
-	GFX_THROW_INFO(
-		pDevice->CreatePixelShader(pBlob->GetBufferPointer(), pBlob->GetBufferSize(), nullptr, &pPixelShader)
-	);
-
-	// bind pixel shader
-	pDeviceContext->PSSetShader(pPixelShader.Get(), nullptr, 0);
-
-	// create vertex shader
-	wrl::ComPtr<ID3D11VertexShader> pVertexShader;
-	GFX_THROW_INFO(
-		D3DReadFileToBlob(L"VertexShader.cso", &pBlob)
-	);
-	GFX_THROW_INFO(
-		pDevice->CreateVertexShader(pBlob->GetBufferPointer(), pBlob->GetBufferSize(), nullptr, &pVertexShader)
-	);
-
-	// bind vertex shader
-	pDeviceContext->VSSetShader(pVertexShader.Get(), nullptr, 0);
-
-	// input layout (vertex) (2d position only)
-	wrl::ComPtr<ID3D11InputLayout> pInputLayout;
-	const D3D11_INPUT_ELEMENT_DESC ied[] =
-	{
-		{"Position", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
-	};
-	GFX_THROW_INFO(
-		pDevice->CreateInputLayout(
-			ied,
-			(UINT)std::size(ied),
-			pBlob->GetBufferPointer(),
-			pBlob->GetBufferSize(),
-			&pInputLayout
-		)
-	);
-
-	//bind vertex layout
-	pDeviceContext->IASetInputLayout(pInputLayout.Get());
-
-	// set primitive topology to triangle list - full list of all type here: https://docs.microsoft.com/en-us/windows/win32/direct3d11/d3d10-graphics-programming-guide-primitive-topologies
-	pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-	// config view port
-	D3D11_VIEWPORT viewP;
-	viewP.Width = 800;
-	viewP.Height = 600;
-	viewP.MinDepth = 0;
-	viewP.MaxDepth = 1;
-	viewP.TopLeftX = 0;
-	viewP.TopLeftY = 0;
-	pDeviceContext->RSSetViewports(1u, &viewP);
-
 	GFX_THROW_INFO_ONLY(
-		// this draw what is inside triangle[]
-		//pDeviceContext->Draw( (UINT)std::size(triangle), 0u)
-		// this draw based on index
-		pDeviceContext->DrawIndexed( (UINT) std::size(indices), 0u, 0u)
+		pDeviceContext->DrawIndexed(count, 0u, 0u)
 	);
+}
+
+void Graphic::SetProjection(DirectX::FXMMATRIX proj) noexcept
+{
+	projection = proj;
+}
+
+DirectX::XMMATRIX Graphic::GetProjection() const noexcept
+{
+	return projection;
 }
 
 Graphic::HrException::HrException(int line, const char* file, HRESULT hr, std::vector<std::string> infoMsgs) noexcept
