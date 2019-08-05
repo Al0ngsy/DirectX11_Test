@@ -188,6 +188,9 @@
     <ClInclude Include="Box.h">
       <Filter>Headerdateien\Drawable</Filter>
     </ClInclude>
+    <ClInclude Include="DrawableBase.h">
+      <Filter>Headerdateien\Drawable</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="3dx.rc">

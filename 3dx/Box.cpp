@@ -15,92 +15,101 @@ Box::Box(Graphic& gfx, std::mt19937& rng, std::uniform_real_distribution<float>&
 	theta(adist(rng)),
 	phi(adist(rng))
 {	
-	// Cube
-	struct Vertex
+	// going with static through DrawableBase so that all the cubes share the same stuff below with exception of transform
+	if (!IsStaticInited())
 	{
-		struct
+		struct Vertex
 		{
-			float x;
-			float y;
-			float z;
-		} pos;
-	};
-	const std::vector<Vertex> vertices =
-	{
-		{ -1.0f,-1.0f,-1.0f },
-		{ 1.0f,-1.0f,-1.0f },
-		{ -1.0f,1.0f,-1.0f },
-		{ 1.0f,1.0f,-1.0f },
-		{ -1.0f,-1.0f,1.0f },
-		{ 1.0f,-1.0f,1.0f },
-		{ -1.0f,1.0f,1.0f },
-		{ 1.0f,1.0f,1.0f },
-	};
-
-	// Vertex Buffer
-	AddBind(std::make_unique<VertexBuffer>(gfx, vertices));
-	
-	auto pvs = std::make_unique<VertexShader>(gfx, L"VertexShader.cso");
-	
-	auto pvsbc = pvs->GetBytecode();
-
-	// Vertex Shader
-	AddBind(std::move(pvs));
-
-	// Pixel Shader
-	AddBind(std::make_unique<PixelShader>(gfx, L"PixelShader.cso"));
-
-	const std::vector<unsigned short> indices =
-	{
-		0,2,1, 2,3,1,
-		1,3,5, 3,7,5,
-		2,6,3, 3,6,7,
-		4,5,7, 4,7,6,
-		0,4,2, 2,4,6,
-		0,1,4, 1,5,4
-	};
-
-	// Index Buffer
-	AddIndexBuffer(std::make_unique<IndexBuffer>(gfx, indices));
-
-	// Face color
-	struct ConstantBuffer2
-	{
-		struct
+			struct
+			{
+				float x;
+				float y;
+				float z;
+			} pos;
+		};
+		const std::vector<Vertex> vertices =
 		{
-			float r;
-			float g;
-			float b;
-			float a;
-		} face_colors[6];
-	};
-	const ConstantBuffer2 cb2 =
-	{
+			{ -1.0f,-1.0f,-1.0f },
+			{ 1.0f,-1.0f,-1.0f },
+			{ -1.0f,1.0f,-1.0f },
+			{ 1.0f,1.0f,-1.0f },
+			{ -1.0f,-1.0f,1.0f },
+			{ 1.0f,-1.0f,1.0f },
+			{ -1.0f,1.0f,1.0f },
+			{ 1.0f,1.0f,1.0f },
+		};
+
+		// Vertex Buffer
+		AddStaticBind(std::make_unique<VertexBuffer>(gfx, vertices));
+
+		auto pvs = std::make_unique<VertexShader>(gfx, L"VertexShader.cso");
+
+		auto pvsbc = pvs->GetBytecode();
+
+		// Vertex Shader
+		AddStaticBind(std::move(pvs));
+
+		// Pixel Shader
+		AddStaticBind(std::make_unique<PixelShader>(gfx, L"PixelShader.cso"));
+
+		const std::vector<unsigned short> indices =
 		{
-			{ 1.0f,0.0f,1.0f },
-			{ 1.0f,0.0f,0.0f },
-			{ 0.0f,1.0f,0.0f },
-			{ 0.0f,0.0f,1.0f },
-			{ 1.0f,1.0f,0.0f },
-			{ 0.0f,1.0f,1.0f },
-		}
-	};
+			0,2,1, 2,3,1,
+			1,3,5, 3,7,5,
+			2,6,3, 3,6,7,
+			4,5,7, 4,7,6,
+			0,4,2, 2,4,6,
+			0,1,4, 1,5,4
+		};
 
-	// Pixel Constant Buffer
-	AddBind(std::make_unique<PixelConstantBuffer<ConstantBuffer2>>(gfx, cb2));
+		// Index Buffer
+		AddStaticIndexBuffer(std::make_unique<IndexBuffer>(gfx, indices));
 
-	const std::vector<D3D11_INPUT_ELEMENT_DESC> ied =
+		// Face color
+		struct ConstantBuffer2
+		{
+			struct
+			{
+				float r;
+				float g;
+				float b;
+				float a;
+			} face_colors[6];
+		};
+		const ConstantBuffer2 cb2 =
+		{
+			{
+				{ 1.0f,0.0f,1.0f },
+				{ 1.0f,0.0f,0.0f },
+				{ 0.0f,1.0f,0.0f },
+				{ 0.0f,0.0f,1.0f },
+				{ 1.0f,1.0f,0.0f },
+				{ 0.0f,1.0f,1.0f },
+			}
+		};
+
+		// Pixel Constant Buffer
+		AddStaticBind(std::make_unique<PixelConstantBuffer<ConstantBuffer2>>(gfx, cb2));
+
+		const std::vector<D3D11_INPUT_ELEMENT_DESC> ied =
+		{
+			{ "Position",0,DXGI_FORMAT_R32G32B32_FLOAT,0,0,D3D11_INPUT_PER_VERTEX_DATA,0 },
+		};
+
+		// Input Layout
+		AddStaticBind(std::make_unique<InputLayout>(gfx, ied, pvsbc));
+
+		// Topology
+		AddStaticBind(std::make_unique<Topology>(gfx, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST));
+	}
+	else
 	{
-		{ "Position",0,DXGI_FORMAT_R32G32B32_FLOAT,0,0,D3D11_INPUT_PER_VERTEX_DATA,0 },
-	};
-
-	// Input Layout
-	AddBind(std::make_unique<InputLayout>(gfx, ied, pvsbc));
-
-	// Topology
-	AddBind(std::make_unique<Topology>(gfx, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST));
+		// for 2nd, 3rd ... boxes
+		SetIndexFromStatic();
+	}
 
 	// Transform
+	// Is for each cube diferent, so we add it through drawable
 	AddBind(std::make_unique<TransformCBuf>(gfx, *this));
 }
 
