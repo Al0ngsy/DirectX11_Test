@@ -34,6 +34,9 @@
     <Filter Include="Quelldateien\Drawable">
       <UniqueIdentifier>{5248d873-ba27-441a-a2b4-757e98a3c26c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Headerdateien\Geometry">
+      <UniqueIdentifier>{439ed63d-ac9c-496f-b8e7-aa51bdb6c5f6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ErrorException.cpp">
@@ -190,6 +193,27 @@
     </ClInclude>
     <ClInclude Include="DrawableBase.h">
       <Filter>Headerdateien\Drawable</Filter>
+    </ClInclude>
+    <ClInclude Include="Math.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="Cone.h">
+      <Filter>Headerdateien\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="Cube.h">
+      <Filter>Headerdateien\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="IndexedTriangleList.h">
+      <Filter>Headerdateien\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="Plane.h">
+      <Filter>Headerdateien\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="Prism.h">
+      <Filter>Headerdateien\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="Sphere.h">
+      <Filter>Headerdateien\Geometry</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
